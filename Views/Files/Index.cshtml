@@ -1,0 +1,48 @@
+﻿@model IEnumerable<KaviClientServerProject.Models.FileItem>
+@{
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Files";
+    var isAdmin = (bool)ViewBag.IsAdmin;
+}
+
+<h1 class="my-4">Files</h1>
+
+@if (isAdmin)
+{
+        <!-- Admin Upload Form -->
+        <form method="post" action="/Files/UploadFile" enctype="multipart/form-data" class="mb-4">
+            <div class="input-group">
+                <input type="file" name="uploadedFile" class="form-control" required>
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </div>
+        </form>
+}
+
+<!-- File List -->
+<table class="table">
+    <thead>
+        <tr>
+            <th>File Name</th>
+            <th>Uploaded At</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var file in Model)
+        {
+                <tr>
+                    <td>@file.FileName</td>
+                    <td>@file.UploadedAt.ToLocalTime().ToString("g")</td>
+                    <td>
+                    <a href="/Files/DownloadFile/@file.Id" class="btn btn-success btn-sm">Download</a>
+                    @if (isAdmin)
+                    {
+                        <form method="post" action="/Files/DeleteFile/@file.Id" class="d-inline">
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
+                    }
+                    </td>
+                </tr>
+        }
+    </tbody>
+</table>

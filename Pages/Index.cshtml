@@ -1,0 +1,144 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home - My CV";
+}
+
+<div class="container">
+    <!-- About Me Section -->
+    <section id="about" class="my-5">
+        <h2 class="text-center">About Me</h2>
+        <div class="row mt-4">
+            <div class="col-md-4 text-center">
+                <img src="~/images/profile.jpg" alt="Profile Picture" class="img-fluid rounded-circle shadow">
+            </div>
+            <div class="col-md-8">
+                <p>
+                    Hello, I'm [Your Name], a software developer with a passion for building robust and scalable
+                    applications. I specialize in .NET, C#, and modern web development. My goal is to create solutions that make a meaningful impact.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section id="skills" class="my-5">
+        <h2 class="text-center">Skills</h2>
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <ul class="list-group">
+                    <li class="list-group-item">C# / .NET</li>
+                    <li class="list-group-item">Entity Framework Core</li>
+                    <li class="list-group-item">SQL / SQLite</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <ul class="list-group">
+                    <li class="list-group-item">HTML, CSS, and JavaScript</li>
+                    <li class="list-group-item">Bootstrap</li>
+                    <li class="list-group-item">Git / Version Control</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comments Section -->
+    <section id="comments" class="my-5">
+        <h2 class="text-center">Comments</h2>
+        <form id="commentForm" class="mt-4">
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <div class="mb-3">
+                <label class="form-label">Logged in as:</label>
+                <p id="loggedInUserName" class="form-control-plaintext">@User.Identity.Name</p>
+                 <input type="text" class="form-control" id="commentName" placeholder="Enter your name" hidden>
+            </div>
+        }
+        else
+        {
+            <div id="anonymousNameDiv" class="mb-3">
+                <label for="commentName" class="form-label">Name</label>
+                <input type="text" class="form-control" id="commentName" placeholder="Enter your name">
+            </div>
+        }
+
+            <div class="mb-3">
+                <label for="commentMessage" class="form-label">Comment</label>
+                <textarea class="form-control" id="commentMessage" rows="4" placeholder="Enter your comment"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Post Comment</button>
+        </form>
+        <div id="commentsList" class="mt-4">
+            <!-- Comments will be dynamically added here -->
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+<script>
+    // Fetch and display comments
+    $(document).ready(function () {
+        $.get('/api/Comments', function (data) {
+            data.forEach(comment => {
+                var commentHtml = `<div class="card mt-3">
+                    <div class="card-body">
+                        <h5 class="card-title">${comment.userId === 'Guest' ? 'Anonymous' : comment.userName}</h5>
+                        <p class="card-text">${comment.content}</p>
+                        <small class="text-muted">${new Date(comment.createdAt).toLocaleString()}</small>
+                    </div>
+                </div>`;
+                $('#commentsList').append(commentHtml);
+            });
+        });
+    });
+
+    // Submit a new comment
+    $('#commentForm').on('submit', function (e) {
+    e.preventDefault();
+
+    var message = $('#commentMessage').val();
+    var userName = $('#commentName').val(); // Optional name input for anonymous users
+
+    if (message) {
+        var commentData = {
+            content: message,
+            userName: userName // Send the username (can be null for anonymous)
+        };
+
+        $.ajax({
+            url: '/api/Comments',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(commentData),
+            success: function (response) {
+                // Check if a comment exists in the response
+                if (response.comment) {
+                    var commentHtml = `<div class="card mt-3">
+                        <div class="card-body">
+                            <h5 class="card-title">${response.comment.userName}</h5>
+                            <p class="card-text">${response.comment.content}</p>
+                            <small class="text-muted">${new Date(response.comment.createdAt).toLocaleString()}</small>
+                        </div>
+                    </div>`;
+                    $('#commentsList').prepend(commentHtml);
+                    $('#commentMessage').val('');
+                    $('#commentName').val('');
+                }
+
+                // Check if a redirect URL exists in the response
+                if (response.redirect) {
+                    window.location.href = response.redirect;
+                }
+            },
+            error: function () {
+                alert('An error occurred while posting the comment.');
+            }
+        });
+    } else {
+        alert('Please enter a comment.');
+    }
+});
+
+
+</script>
+}

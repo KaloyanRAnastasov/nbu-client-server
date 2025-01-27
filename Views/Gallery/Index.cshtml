@@ -1,0 +1,128 @@
+﻿@model IEnumerable<KaviClientServerProject.Models.GalleryItem>
+@{
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Gallery";
+    var isAdmin = (bool)ViewBag.IsAdmin;
+}
+
+<h1 class="my-4">Gallery</h1>
+
+@if (isAdmin)
+{
+    <!-- Admin Controls -->
+    <form method="post" action="/Gallery/Add" enctype="multipart/form-data" class="mb-4">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="All" class="text-danger"></div>
+        <div class="input-group">
+            <input type="text" name="title" class="form-control" placeholder="Title" required>
+            <input type="file" name="imageFile" class="form-control" accept="image/*" required>
+            <button type="submit" class="btn btn-primary">Add</button>
+        </div>
+    </form>
+}
+
+<!-- Tabs Navigation -->
+<ul class="nav nav-tabs" id="galleryTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="slider-tab" data-bs-toggle="tab" data-bs-target="#slider" type="button" role="tab" aria-controls="slider" aria-selected="true">Slider</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="grid-tab" data-bs-toggle="tab" data-bs-target="#grid" type="button" role="tab" aria-controls="grid" aria-selected="false">Grid</button>
+    </li>
+</ul>
+
+<div class="tab-content mt-4" id="galleryTabContent">
+    <!-- Slider Tab -->
+    <div class="tab-pane fade show active" id="slider" role="tabpanel" aria-labelledby="slider-tab">
+        <div id="gallerySwiper" class="swiper">
+            <div class="swiper-wrapper">
+                @foreach (var item in Model)
+                {
+                    <div class="swiper-slide position-relative">
+                        <img src="@item.ImagePath" alt="@item.Title" class="img-fluid">
+                        <p class="text-center mt-2">@item.Title</p>
+
+                        @if (isAdmin)
+                        {
+                            <!-- Admin-only Remove Button -->
+                            <form method="post" action="/Gallery/Remove" class="position-absolute top-0 end-0 m-2">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="btn btn-danger btn-sm">&#10006;</button>
+                            </form>
+                        }
+                    </div>
+                }
+            </div>
+            <div class="swiper-pagination"></div>
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
+        </div>
+    </div>
+
+    <!-- Grid Tab -->
+    <div class="tab-pane fade" id="grid" role="tabpanel" aria-labelledby="grid-tab">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+            @foreach (var item in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 position-relative">
+                        <img src="@item.ImagePath" alt="@item.Title" class="card-img-top" style="object-fit: cover; max-height: 150px; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#imageModal" data-bs-image="@item.ImagePath">
+                        <div class="card-body">
+                            <p class="card-text">@item.Title</p>
+                        </div>
+                        @if (isAdmin)
+                        {
+                            <!-- Admin-only Remove Button -->
+                            <form method="post" action="/Gallery/Remove" class="position-absolute top-0 end-0 m-2">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="btn btn-danger btn-sm">&#10006;</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Full-Size Image -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <img id="modalImage" src="" alt="" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script>
+    <script>
+        var swiper = new Swiper('#gallerySwiper', {
+            slidesPerView: 1,
+            spaceBetween: 10,
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+        });
+
+        // Modal logic for displaying full-size image
+        var imageModal = document.getElementById('imageModal');
+        imageModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget; // Element that triggered the modal
+            var imageSrc = button.getAttribute('data-bs-image');
+            var modalImage = document.getElementById('modalImage');
+            modalImage.src = imageSrc;
+        });
+    </script>
+}
